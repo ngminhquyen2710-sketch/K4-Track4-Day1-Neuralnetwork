@@ -19,8 +19,8 @@
 | Loss bước 0 trên val | 2.2691, gần `ln 7 = 1.946` |
 | Quá khớp 20 mẫu: loss cuối | gần 0 |
 | Gradient có chảy | có |
-| Baseline: val accuracy | 0.8976 |
-| Baseline: val macro-F1 | 0.8371 |
+| Baseline mean val accuracy (3 seeds) | 0.8989 |
+| Baseline mean val macro-F1 (3 seeds) | 0.8357 |
 | Thí nghiệm optimizer tốt nhất | `opt-adam-1e3`: val macro-F1 = 0.8475 |
 | Thí nghiệm hparam tốt nhất | `hparam-adamw`: val macro-F1 = 0.8486 |
 | Thí nghiệm dropout | `dropout-q01`: val macro-F1 = 0.8248 |
@@ -29,15 +29,24 @@
 | Thí nghiệm init | `init-xavier`: val macro-F1 = 0.8462 |
 | Thí nghiệm loss | `loss-mse`: val macro-F1 = 0.8339 |
 
-So với dữ liệu tạo ra bằng một seed duy nhất, độ nhiễu seed chưa được đo đầy đủ. Đây là hạn chế của báo cáo, nhưng tất cả các chủ đề đã có ít nhất 1 số liệu lưu trên validation.
+Baseline được chạy với 3 seed; độ lệch chuẩn mẫu của val macro-F1 là 0.0077, nên ngưỡng 2σ ước lượng là 0.0154. Đây chỉ là ước lượng thô từ 3 lần chạy. Các chênh lệch val macro-F1 của những thí nghiệm so với baseline seed 1 đều nhỏ hơn ngưỡng này, vì vậy chưa đủ bằng chứng để kết luận cấu hình nào tốt hơn rõ rệt do khác biệt vượt nhiễu seed.
+
+| Baseline | val accuracy | val macro-F1 | best val loss |
+|---|---:|---:|---:|
+| `base-s1` | 0.8976 | 0.8371 | 0.2565 |
+| `base-s2` | 0.8977 | 0.8274 | 0.2526 |
+| `base-s3` | 0.9014 | 0.8426 | 0.2463 |
+| Mean | 0.8989 | 0.8357 | 0.2518 |
+| Sample std | 0.0022 | 0.0077 | 0.0051 |
+| 2σ | 0.0044 | 0.0154 | 0.0103 |
 
 ## 3. Kết quả theo chủ đề
 
 ### 3.1 Baseline
 
 - Dự đoán: baseline nên vượt mốc “đoán đa số” và thấy val loss giảm rõ trong 20 epoch.
-- Kết quả: `exp_id = base-s1`, ảnh `figures/base-s1.png`.
-- Thống kê chính: `best_val_loss = 0.25647`, `val_acc = 0.89759`, `val_macro_f1 = 0.83710` ở epoch 20.
+- Kết quả: `exp_id = base-s1`, `base-s2`, `base-s3`; ảnh tương ứng trong `figures/`.
+- Thống kê chính: trung bình 3 seed có `val_acc = 0.89891`, `val_macro_f1 = 0.83569`, `best_val_loss = 0.25179`. Macro-F1 dao động từ 0.82737 đến 0.84261.
 - Giải thích: He init và SGD+momentum cho gradient ổn định, số bước cập nhật đủ để mô hình học tốt.
 
 ### 3.2 Loss
@@ -99,7 +108,7 @@ Chọn cấu hình bằng validation: cấu hình cuối cùng là `hparam-adamw
 | `opt-adam-1e3` | 0.8475 | 0.8487 | 0.9042 |
 | `hparam-adamw` | 0.8486 | 0.8531 | 0.9026 |
 
-Val và eval gần nhau: chênh lệch dưới ~0.01, nên validation là ước lượng đáng tin cậy. Cấu hình cuối cùng được chọn là `hparam-adamw`.
+Val và eval gần nhau: chênh lệch dưới ~0.01, nên validation là ước lượng đáng tin cậy. Cấu hình cuối cùng được chọn là `hparam-adamw` theo val macro-F1 cao nhất trong các lần chạy đơn. Tuy nhiên, mức tăng 0.0115 so với baseline seed 1 nhỏ hơn ngưỡng nhiễu 2σ ước lượng 0.0154; do đó kết quả chưa chứng minh `hparam-adamw` tốt hơn một cách có ý nghĩa thống kê.
 
 ### 4.1 Phân tích lỗi theo lớp
 
@@ -116,13 +125,13 @@ Từ `eval_result.json`, lớp khó nhất là lớp 4 với F1 ≈ 0.7513; nhi�
 
 ## 6. Hạn chế
 
-- Chỉ chạy 1 seed cho mỗi cấu hình, nên chưa có ước lượng nhiễu robust.
+- Các thí nghiệm ngoài baseline vẫn chỉ chạy một seed mỗi cấu hình; ước lượng độ nhiễu baseline dựa trên 3 seed nên còn thô.
 - Môi trường chạy là CPU, nên thời gian huấn luyện lâu hơn so với GPU.
 - Mặc dù đã đủ 7 chủ đề, các thí nghiệm chưa đi sâu ở nhiều seed và nhiều cấu hình hyper-parameter.
 
 ## 7. Phụ lục
 
-- `base-s1.json`, `opt-adam-1e3.json`, `hparam-adamw.json`, `dropout-q01.json`, `clip-lr01.json`, `amp-bf16.json`, `loss-mse.json`, `init-xavier.json` trong [results](results/)
-- `base-s1.png`, `opt-adam-1e3.png`, `hparam-adamw.png`, `dropout-q01.png`, `clip-lr01.png`, `amp-bf16.png`, `loss-mse.png`, `init-xavier.png` trong [figures](figures/)
+- `base-s1.json`, `base-s2.json`, `base-s3.json`, `opt-adam-1e3.json`, `hparam-adamw.json`, `dropout-q01.json`, `clip-lr01.json`, `amp-bf16.json`, `loss-mse.json`, `init-xavier.json` trong [results](results/)
+- `base-s1.png`, `base-s2.png`, `base-s3.png`, `opt-adam-1e3.png`, `hparam-adamw.png`, `dropout-q01.png`, `clip-lr01.png`, `amp-bf16.png`, `loss-mse.png`, `init-xavier.png` trong [figures](figures/)
 - `predictions_eval.csv`
 - `eval_result.json`
