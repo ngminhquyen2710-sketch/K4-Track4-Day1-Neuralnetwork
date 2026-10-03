@@ -61,10 +61,10 @@ def main():
     # ---- thống kê để bạn đối chiếu
     tr = np.load(out / "train.npz")["y"]; ev = np.load(out / "eval.npz")["y"]
     ctr, cev = np.bincount(tr, minlength=7), np.bincount(ev, minlength=7)
-    print("\nlớp   train(%)   eval(%)")
+    print("\nclass  train(%)  eval(%)")
     for c in range(7):
         print(f"{c:>3d}   {100*ctr[c]/ctr.sum():7.3f}   {100*cev[c]/cev.sum():7.3f}")
-    print(f"\nđoán luôn lớp đa số (lớp {ctr.argmax()}) cho accuracy trên eval = {cev[ctr.argmax()]/cev.sum():.4f}")
+    print(f"\nAlways predict majority class ({ctr.argmax()}) gives eval accuracy = {cev[ctr.argmax()]/cev.sum():.4f}")
 
 
 if __name__ == "__main__":
